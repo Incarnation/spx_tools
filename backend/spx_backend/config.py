@@ -20,8 +20,13 @@ class Settings(BaseSettings):
     snapshot_interval_minutes: int = 5
     snapshot_underlying: str = "SPX"
     snapshot_dte_targets: str = "3,5,7"
+    snapshot_dte_tolerance_days: int = 1
 
     cors_origins: str = "http://localhost:5173"
+
+    # Testing/ops controls
+    allow_snapshot_outside_rth: bool = False
+    admin_api_key: str | None = None
 
     def dte_targets_list(self) -> list[int]:
         parts = [p.strip() for p in self.snapshot_dte_targets.split(",") if p.strip()]

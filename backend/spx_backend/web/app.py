@@ -3,7 +3,7 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 from datetime import datetime
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from sqlalchemy import text
@@ -12,7 +12,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from spx_backend.config import settings
 from spx_backend.db import get_db_session
 from spx_backend.db_init import init_db
-from spx_backend.jobs.snapshot_job import build_snapshot_job
+from spx_backend.ingestion.tradier_client import get_tradier_client
+from spx_backend.jobs.snapshot_job import _parse_expirations, build_snapshot_job
 
 
 @asynccontextmanager
@@ -94,6 +95,29 @@ async def list_chain_snapshots(limit: int = 50, db: AsyncSession = Depends(get_d
             for row in rows
         ]
     }
+
+
+def _require_admin(x_api_key: str | None = Header(default=None)) -> None:
+    # If ADMIN_API_KEY is not set, allow local/dev usage without auth.
+    if settings.admin_api_key:
+        if not x_api_key or x_api_key != settings.admin_api_key:
+            raise HTTPException(status_code=401, detail="Unauthorized")
+
+
+@app.post("/api/admin/run-snapshot")
+async def admin_run_snapshot(_: None = Depends(_require_admin)) -> dict:
+    # Force run once even outside RTH (useful for testing).
+    job = build_snapshot_job()
+    result = await job.run_once(force=True)
+    return result
+
+
+@app.get("/api/admin/expirations")
+async def admin_list_expirations(symbol: str = "SPX", _: None = Depends(_require_admin)) -> dict:
+    client = get_tradier_client()
+    resp = await client.get_option_expirations(symbol)
+    exps = _parse_expirations(resp)
+    return {"symbol": symbol, "expirations": [e.isoformat() for e in exps]}
 
 
 @app.get("/", response_class=HTMLResponse)
