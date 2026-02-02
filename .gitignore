@@ -1,0 +1,33 @@
+.DS_Store
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+*.log
+
+# Virtualenv
+.venv/
+venv/
+
+# Node / React
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Data / DB artifacts (keep large data out of git)
+*.duckdb
+*.db
+*.sqlite
+*.sqlite3
+*.parquet
+data/
+

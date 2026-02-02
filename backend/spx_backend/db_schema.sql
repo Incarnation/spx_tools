@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS option_instruments (
   root TEXT NOT NULL,
   expiration DATE NOT NULL,
   strike DOUBLE PRECISION NOT NULL,
-  right TEXT NOT NULL, -- 'C' or 'P'
+  option_right TEXT NOT NULL, -- 'C' or 'P'
   style TEXT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );

@@ -4,7 +4,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    # When running locally, we typically run from repo root or from backend/.
+    model_config = SettingsConfigDict(env_file=(".env", "../.env"), env_file_encoding="utf-8")
 
     app_env: str = "local"
     log_level: str = "INFO"
@@ -20,9 +21,15 @@ class Settings(BaseSettings):
     snapshot_underlying: str = "SPX"
     snapshot_dte_targets: str = "3,5,7"
 
+    cors_origins: str = "http://localhost:5173"
+
     def dte_targets_list(self) -> list[int]:
         parts = [p.strip() for p in self.snapshot_dte_targets.split(",") if p.strip()]
         return [int(p) for p in parts]
+
+    def cors_origins_list(self) -> list[str]:
+        parts = [p.strip() for p in self.cors_origins.split(",") if p.strip()]
+        return parts
 
 
 settings = Settings()

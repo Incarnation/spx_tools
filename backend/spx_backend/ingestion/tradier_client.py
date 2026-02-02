@@ -6,7 +6,7 @@ from typing import Any
 import httpx
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-from spx_tools.config import settings
+from spx_backend.config import settings
 
 
 @dataclass(frozen=True)

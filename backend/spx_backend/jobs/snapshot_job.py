@@ -9,9 +9,9 @@ from zoneinfo import ZoneInfo
 from loguru import logger
 from sqlalchemy import text
 
-from spx_tools.config import settings
-from spx_tools.db import SessionLocal
-from spx_tools.ingestion.tradier_client import TradierClient, get_tradier_client
+from spx_backend.config import settings
+from spx_backend.db import SessionLocal
+from spx_backend.ingestion.tradier_client import TradierClient, get_tradier_client
 
 
 def _checksum(payload: object) -> str:
@@ -33,7 +33,7 @@ def _parse_expirations(resp: dict) -> list[date]:
 
 def _choose_expiration_for_dte(expirations: list[date], target_dte: int, now_et: datetime, tolerance: int = 1) -> date | None:
     # DTE computed in calendar days (good enough for the MVP).
-    target_date = (now_et.date() + timedelta(days=target_dte))
+    target_date = now_et.date() + timedelta(days=target_dte)
     candidates = [e for e in expirations if abs((e - target_date).days) <= tolerance]
     if not candidates:
         return None
