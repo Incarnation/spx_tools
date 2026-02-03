@@ -1,5 +1,25 @@
 import React from "react";
 import { fetchChainSnapshots, runSnapshotNow, type ChainSnapshot, type RunSnapshotResult } from "./api";
+import {
+  Alert,
+  Badge,
+  Box,
+  Button,
+  Card,
+  Code,
+  Container,
+  Group,
+  Loader,
+  ScrollArea,
+  Table,
+  Text,
+  TextInput,
+  Title,
+} from "@mantine/core";
+
+function truncate(s: string, n: number) {
+  return s.length <= n ? s : `${s.slice(0, n)}…`;
+}
 
 export function App() {
   const [items, setItems] = React.useState<ChainSnapshot[]>([]);
@@ -34,79 +54,115 @@ export function App() {
   }, [adminKey, refresh]);
 
   return (
-    <div style={{ fontFamily: "system-ui", maxWidth: 1000, margin: "40px auto", padding: 16 }}>
-      <h2>SPX Tools</h2>
-      <p style={{ color: "#555" }}>React dashboard (MVP)</p>
-
-      <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", margin: "16px 0" }}>
-        <button onClick={refresh} style={{ padding: "8px 12px" }}>
-          Refresh
-        </button>
-        <button onClick={runSnapshot} style={{ padding: "8px 12px" }}>
-          Run snapshot now
-        </button>
-        <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <span style={{ color: "#555" }}>Admin key (optional)</span>
-          <input
-            value={adminKey}
-            onChange={(e) => setAdminKey(e.target.value)}
-            placeholder="X-API-Key"
-            style={{ padding: "8px 10px", width: 260 }}
-          />
-        </label>
-      </div>
-
-      {loading && <p>Loading…</p>}
-      {error && (
-        <p style={{ color: "crimson" }}>
-          Error: {error} (Is the backend running on port 8000?)
-        </p>
-      )}
-
-      {runResult && (
-        <div style={{ background: "#f7f7f7", padding: 12, borderRadius: 8, marginBottom: 16 }}>
-          <div style={{ marginBottom: 8 }}>
-            <strong>Snapshot run result</strong>
+    <Box bg="gray.0" mih="100vh" py="xl">
+      <Container size="lg">
+        <Group justify="space-between" align="flex-end">
+          <div>
+            <Title order={2}>SPX Tools</Title>
+            <Text c="dimmed" mt={4}>
+              React dashboard (MVP)
+            </Text>
           </div>
-          <pre style={{ margin: 0, overflowX: "auto" }}>{JSON.stringify(runResult, null, 2)}</pre>
-        </div>
-      )}
+          <Badge variant="light">Snapshots</Badge>
+        </Group>
 
-      <h3>Latest chain snapshots</h3>
-      <table width="100%" cellPadding={8} style={{ borderCollapse: "collapse" }}>
-        <thead>
-          <tr style={{ textAlign: "left", borderBottom: "1px solid #ddd" }}>
-            <th>ID</th>
-            <th>Time (UTC)</th>
-            <th>Underlying</th>
-            <th>DTE</th>
-            <th>Expiration</th>
-            <th>Checksum</th>
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((x) => (
-            <tr key={x.snapshot_id} style={{ borderBottom: "1px solid #f0f0f0" }}>
-              <td>{x.snapshot_id}</td>
-              <td>{x.ts}</td>
-              <td>{x.underlying}</td>
-              <td>{x.target_dte}</td>
-              <td>{x.expiration}</td>
-              <td>
-                <code>{x.checksum.slice(0, 12)}</code>
-              </td>
-            </tr>
-          ))}
-          {items.length === 0 && !loading && !error && (
-            <tr>
-              <td colSpan={6} style={{ color: "#555" }}>
-                No snapshots yet. Try clicking “Run snapshot now”.
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-    </div>
+        <Card withBorder radius="md" mt="lg" p="md">
+          <Group justify="space-between" align="flex-end" wrap="wrap" gap="md">
+            <Group>
+              <Button onClick={refresh} variant="light">
+                Refresh
+              </Button>
+              <Button onClick={runSnapshot}>Run snapshot now</Button>
+            </Group>
+            <TextInput
+              label="Admin key (optional)"
+              value={adminKey}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAdminKey(e.currentTarget.value)}
+              placeholder="X-API-Key"
+              w={320}
+            />
+          </Group>
+        </Card>
+
+        {error && (
+          <Alert mt="md" color="red" title="Error">
+            <Text>
+              {error} <Text span c="dimmed">(Is the backend running on port 8000?)</Text>
+            </Text>
+          </Alert>
+        )}
+
+        {runResult && (
+          <Card withBorder radius="md" mt="md" p="md">
+            <Group justify="space-between" mb="xs">
+              <Text fw={600}>Snapshot run result</Text>
+              <Badge variant="light" color={runResult.skipped ? "yellow" : "green"}>
+                {runResult.skipped ? "Skipped" : "Inserted"}
+              </Badge>
+            </Group>
+            <ScrollArea h={220} type="auto">
+              <Code block>{JSON.stringify(runResult, null, 2)}</Code>
+            </ScrollArea>
+          </Card>
+        )}
+
+        <Card withBorder radius="md" mt="lg" p="md">
+          <Group justify="space-between" align="center" mb="sm">
+            <Text fw={600}>Latest chain snapshots</Text>
+            {loading ? (
+              <Group gap="xs">
+                <Loader size="sm" />
+                <Text c="dimmed" size="sm">
+                  Loading…
+                </Text>
+              </Group>
+            ) : (
+              <Text c="dimmed" size="sm">
+                {items.length} rows
+              </Text>
+            )}
+          </Group>
+
+          <ScrollArea type="auto">
+            <Table striped highlightOnHover withTableBorder withColumnBorders>
+              <Table.Thead>
+                <Table.Tr>
+                  <Table.Th>ID</Table.Th>
+                  <Table.Th>Time (UTC)</Table.Th>
+                  <Table.Th>Underlying</Table.Th>
+                  <Table.Th>DTE</Table.Th>
+                  <Table.Th>Expiration</Table.Th>
+                  <Table.Th>Checksum</Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>
+                {items.map((x) => (
+                  <Table.Tr key={x.snapshot_id}>
+                    <Table.Td>{x.snapshot_id}</Table.Td>
+                    <Table.Td>{x.ts}</Table.Td>
+                    <Table.Td>
+                      <Badge variant="light">{x.underlying}</Badge>
+                    </Table.Td>
+                    <Table.Td>{x.target_dte}</Table.Td>
+                    <Table.Td>{x.expiration}</Table.Td>
+                    <Table.Td>
+                      <Code>{truncate(x.checksum, 12)}</Code>
+                    </Table.Td>
+                  </Table.Tr>
+                ))}
+                {items.length === 0 && !loading && !error && (
+                  <Table.Tr>
+                    <Table.Td colSpan={6}>
+                      <Text c="dimmed">No snapshots yet. Try clicking “Run snapshot now”.</Text>
+                    </Table.Td>
+                  </Table.Tr>
+                )}
+              </Table.Tbody>
+            </Table>
+          </ScrollArea>
+        </Card>
+      </Container>
+    </Box>
   );
 }
 
